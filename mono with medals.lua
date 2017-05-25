@@ -635,7 +635,7 @@ function OnTrafficCreated(theTraffic)
 			end
 		end
 	end--]]
-	goldscore = calculateMaxScore(ablocks)
+	goldscore = math.floor(calculateMaxScore(ablocks) * 1.1) -- clean finish
 	silverscore = math.floor(0.85 * goldscore)
 	bronzescore = math.floor(0.7 * goldscore)
 	SetScoreboardNote{text="\nBronze Medal: "..bronzescore.."\nSilver Medal: "..silverscore.."\nGold Medal: "..goldscore}
@@ -1058,11 +1058,12 @@ function OnRequestFinalScoring()
 	--local stealthBonus = 0
 	--if stealthy then stealthBonus = score * .2 end
 	local medal = ""
-	if score >= goldscore then
+    local fscore = score + cleanFinishBonus
+	if fscore >= goldscore then
 		medal = "Congratulations! You have earned gold medal!"
-	elseif score >= silverscore then
+	elseif fscore >= silverscore then
 		medal = "Nice work! You have earned silver medal!"
-	elseif score >= bronzescore then
+	elseif fscore >= bronzescore then
 		medal = "You have earned bronze medal!"
 	end
 	
@@ -1072,6 +1073,6 @@ function OnRequestFinalScoring()
 			"Clean Finish:"..cleanFinishBonus,
 			medal
 		},
-		finalscore = score + cleanFinishBonus
+		finalscore = fscore
 	}
 end
