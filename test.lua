@@ -237,6 +237,10 @@ end
 
 -- main calculation function
 function calculateMaxScore(blocks)
+    -- fix bug with short songs
+    if maxdepth > #blocks then
+        maxdepth = #blocks
+    end
 	for i = 1, #blocks + 1 - maxdepth do
 		-- this var actually useful only at last iteration
 		local maxscore = currentgamestate.score
