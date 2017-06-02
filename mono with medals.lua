@@ -1,7 +1,8 @@
 -- calculation settings
 maxdepth = 11 -- how much blocks be analysed to decide collect or skip current block
-matchtimeout = 2 -- time in seconds which forces grid clean
+matchtimeout = 1.5 -- time in seconds which forces grid clean
 pbtimeout = 1.5 -- how much seconds we should skip blocks after collecting PB
+blockfallingrate = 0.1 -- how quickly blocks fall in the grid, in seconds
 
 currentgamestate = {
 	score = 0, -- we start with zero points
@@ -11,6 +12,10 @@ currentgamestate = {
 
 function fif(test, if_true, if_false)
   if test then return if_true else return if_false end
+end
+
+function greaternumber(a, b)
+	return fif(a>b, a, b)
 end
 
 --next: add some way to span gaps to "fix" troll PBs with skill
@@ -279,7 +284,9 @@ function pickBlock(state, block)
 	local resultstate = {}
 	resultstate.grid = {state.grid[1], state.grid[2], state.grid[3]}
 	resultstate.score = state.score
-	resultstate.prevcollectedblockseconds = track[block.chainend].seconds
+	local fallingtime = blockfallingrate * (7 - state.grid[block.lane + 2])
+	local blocktime = track[block.chainend].seconds - block.seconds
+	resultstate.prevcollectedblockseconds = greaternumber(fif(fallingtime > blocktime, block.seconds + fallingtime, track[block.chainend].seconds), state.prevcollectedblockseconds)
 	-- check for match timeout
 	if track[block.chainstart].seconds - state.prevcollectedblockseconds > matchtimeout then
 		resultstate.score = resultstate.score + calculateScore(state)
