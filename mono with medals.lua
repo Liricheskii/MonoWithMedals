@@ -284,7 +284,8 @@ function pickBlock(state, block)
 	local resultstate = {}
 	resultstate.grid = {state.grid[1], state.grid[2], state.grid[3]}
 	resultstate.score = state.score
-	local fallingtime = blockfallingrate * (7 - state.grid[block.lane + 2])
+	-- 0.25 - time for a hit block to transfer from the track to grid
+	local fallingtime = 0.25 + blockfallingrate * (7 - state.grid[block.lane + 2])
 	local blocktime = track[block.chainend].seconds - block.seconds
 	resultstate.prevcollectedblockseconds = greaternumber(fif(fallingtime > blocktime, block.seconds + fallingtime, track[block.chainend].seconds), state.prevcollectedblockseconds)
 	-- check for match timeout
