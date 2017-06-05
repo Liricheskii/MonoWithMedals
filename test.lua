@@ -153,14 +153,23 @@ ablocks[150] = {type = 6, lane = -1, chainstart = 30.230405807495, chainend = 30
 
 -- calculation settings
 maxdepth = 10 -- how much blocks be analysed to decide collect or skip current block
-matchtimeout = 2 -- time in seconds which forces grid clean
-pbtimeout = 1.5 -- how much seconds we should skip blocks after collecting PB
+matchtimeout = 1.5 -- time in seconds which forces grid clean
+pbtimeout = 1.25 -- how much seconds we should skip blocks after collecting PB (empirical value)
+blockfallingrate = 0.1 -- how quickly blocks fall in the grid, in seconds
 
 currentgamestate = {
 	score = 0, -- we start with zero points
 	grid = {0, 0, 0}, -- and empty grid
 	prevcollectedblockseconds = 0 -- this var holds time when we last time collect block. It uses for detecting math timeouts.
 }
+
+function fif(test, if_true, if_false)
+	if test then return if_true else return if_false end
+end
+
+function greaternumber(a, b)
+	return fif(a>b, a, b)
+end
 
 -- calculates how much points grid in current state will give to us
 -- Examples: 7 | 6 | 7 -> 14000     2 | 0 | 7 -> 1715
@@ -208,7 +217,10 @@ function pickBlock(state, block)
 	local resultstate = {}
 	resultstate.grid = {state.grid[1], state.grid[2], state.grid[3]}
 	resultstate.score = state.score
-	resultstate.prevcollectedblockseconds = block.chainend
+	-- 0.25 - time for a hit block to transfer from the track to grid
+	local fallingtime = 0.25 + blockfallingrate * (7 - state.grid[block.lane + 2])
+	local blocktime = track[block.chainend].seconds - block.seconds
+	resultstate.prevcollectedblockseconds = greaternumber(fif(fallingtime > blocktime, block.seconds + fallingtime, track[block.chainend].seconds), state.prevcollectedblockseconds)
 	-- check for match timeout
 	if block.chainstart - state.prevcollectedblockseconds > matchtimeout then
 		resultstate.score = resultstate.score + calculateScore(state)
