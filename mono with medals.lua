@@ -1,7 +1,7 @@
 -- calculation settings
 maxdepth = 11 -- how much blocks be analysed to decide collect or skip current block
 matchtimeout = 1.5 -- time in seconds which forces grid clean
-pbtimeout = 1.5 -- how much seconds we should skip blocks after collecting PB
+pbtimeout = 1.25 -- how much seconds we should skip blocks after collecting PB (empirical value)
 blockfallingrate = 0.1 -- how quickly blocks fall in the grid, in seconds
 
 currentgamestate = {
@@ -640,13 +640,15 @@ function OnTrafficCreated(theTraffic)
 	
 	local ablocks = deepcopy(blocks)
 	-- remove blocks which goes after PB
-	--[[for i = 1, #ablocks do
+	local i = 1
+	while i <= #ablocks do
 		if ablocks[i].type == 101 then
 			while track[ablocks[i + 1].impactnode].seconds - track[ablocks[i].impactnode].seconds < pbtimeout do
 				table.remove(ablocks, i + 1)
 			end
 		end
-	end--]]
+		i = i + 1
+	end
 	goldscore = math.floor(calculateMaxScore(ablocks) * 1.1) -- clean finish
 	silverscore = math.floor(0.85 * goldscore)
 	bronzescore = math.floor(0.7 * goldscore)
