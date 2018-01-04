@@ -155,6 +155,7 @@ ablocks[150] = {type = 6, lane = -1, chainstart = 30.230405807495, seconds = 30.
 maxdepth = 10 -- how much blocks be analysed to decide collect or skip current block
 matchtimeout = 1.5 -- time in seconds which forces grid clean
 pbtimeout = 1.25 -- how much seconds we should skip blocks after collecting PB (empirical value)
+lastpbtime = -2 -- when last PB was collected
 blockfallingrate = 0.1 -- how quickly blocks fall in the grid, in seconds
 
 currentgamestate = {
@@ -231,12 +232,15 @@ function pickBlock(state, block)
 			resultstate.grid[block.lane + 2] = resultstate.grid[block.lane + 2] - 1
 		end
 	elseif block.type == 6 then --colored
-		if resultstate.grid[block.lane + 2] == 7 then
+		if resultstate.grid[block.lane + 2] < 7 then
+			resultstate.grid[block.lane + 2] = resultstate.grid[block.lane + 2] + 1
+		elseif (resultstate.grid[block.lane + 2] == 7) and (block.seconds - lastpbtime > pbtimeout) then
 			resultstate.score = resultstate.score + calculateScore(resultstate)
 			resultstate.grid = calculateGrid(resultstate)
+			resultstate.grid[block.lane + 2] = resultstate.grid[block.lane + 2] + 1
 		end
-		resultstate.grid[block.lane + 2] = resultstate.grid[block.lane + 2] + 1
 	elseif block.type == 101 then -- PB
+		lastpbtime = block.seconds
 		local multiplier = fif(block.powerRating == 1, 2, 1.5) -- if this is the big one
 		resultstate.score = resultstate.score + math.floor(multiplier * calculateScore(resultstate))
 		tempgrid = calculateGrid(resultstate)
