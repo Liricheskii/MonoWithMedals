@@ -2,6 +2,7 @@
 maxdepth = 11 -- how much blocks be analysed to decide collect or skip current block
 matchtimeout = 1.5 -- time in seconds which forces grid clean
 pbtimeout = 1.25 -- how much seconds we should skip blocks after collecting PB (empirical value)
+lastpbtime = -2 -- when last PB was collected
 blockfallingrate = 0.1 -- how quickly blocks fall in the grid, in seconds
 
 currentgamestate = {
@@ -298,12 +299,15 @@ function pickBlock(state, block)
 			resultstate.grid[block.lane + 2] = resultstate.grid[block.lane + 2] - 1
 		end
 	elseif block.type == 6 then --colored
-		if resultstate.grid[block.lane + 2] == 7 then
+		if resultstate.grid[block.lane + 2] < 7 then
+			resultstate.grid[block.lane + 2] = resultstate.grid[block.lane + 2] + 1
+		elseif (resultstate.grid[block.lane + 2] == 7) and (block.seconds - lastpbtime > pbtimeout) then
 			resultstate.score = resultstate.score + calculateScore(resultstate)
 			resultstate.grid = calculateGrid(resultstate)
+			resultstate.grid[block.lane + 2] = resultstate.grid[block.lane + 2] + 1
 		end
-		resultstate.grid[block.lane + 2] = resultstate.grid[block.lane + 2] + 1
 	elseif block.type == 101 then -- PB
+		lastpbtime = block.seconds
 		local multiplier = fif(block.powerRating == 1, 2, 1.5) -- if this is the big one
 		resultstate.score = resultstate.score + math.floor(multiplier * calculateScore(resultstate))
 		tempgrid = calculateGrid(resultstate)
@@ -639,16 +643,7 @@ function OnTrafficCreated(theTraffic)
     end
 	
 	local ablocks = deepcopy(blocks)
-	-- remove blocks which goes after PB
-	local i = 1
-	while i <= #ablocks do
-		if ablocks[i].type == 101 then
-			while track[ablocks[i + 1].impactnode].seconds - track[ablocks[i].impactnode].seconds < pbtimeout do
-				table.remove(ablocks, i + 1)
-			end
-		end
-		i = i + 1
-	end
+	
 	goldscore = math.floor(calculateMaxScore(ablocks) * 1.1) -- clean finish
 	silverscore = math.floor(0.85 * goldscore)
 	bronzescore = math.floor(0.7 * goldscore)
